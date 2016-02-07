@@ -12,7 +12,6 @@ RUN apt-get update -y && apt-get install -y \
     automake \
     build-essential \
     ca-certificates \
-    cmake-curses-gui \
     libass-dev \
     libfreetype6-dev \
     libsdl1.2-dev \
@@ -38,24 +37,20 @@ RUN apt-get update -y && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Other Encoders/Decoders unavailable for install via apt-get
+# Other codecs unavailable for install via apt-get
 ENV TMP_PATH /tmp/ffmpeg_sources
 RUN mkdir -p $TMP_PATH
 
-# H.265/HEVC video encoder
-
+# H.265/HEVC video codec
 WORKDIR $TMP_PATH
-# RUN hg clone https://bitbucket.org/multicoreware/x265 \
-#     && cd $TMP_PATH/x265/build/linux \
-#     && ls ../../source/cmake \
-#     && cat ../../source/cmake \
-    # && cmake -G "Unix Makefiles" ../../source \
-    # && ccmake ../../source
-    # && make \
-    # && make install \
-    # && make distclean
+RUN hg clone https://bitbucket.org/multicoreware/x265 \
+    && cd $TMP_PATH/x265/build/linux \
+    && ls ../../source \
+    && cmake -G "Unix Makefiles" ../../source \
+    && make \
+    && make install
 
-# AAC audio encoder
+# AAC audio codec
 WORKDIR $TMP_PATH
 RUN wget -O fdk-aac.tar.gz https://github.com/mstorsjo/fdk-aac/tarball/master \
     && tar xzvf fdk-aac.tar.gz \
@@ -66,7 +61,7 @@ RUN wget -O fdk-aac.tar.gz https://github.com/mstorsjo/fdk-aac/tarball/master \
     && make install \
     && make distclean
 
-# VP8/VP9 video encoder and decoder
+# VP8/VP9 video codec
 WORKDIR $TMP_PATH
 RUN git clone https://chromium.googlesource.com/webm/libvpx \
     && cd libvpx \
