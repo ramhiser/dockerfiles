@@ -1,6 +1,5 @@
 FROM ubuntu:trusty
 MAINTAINER John Ramey <johnramey@gmail.com>
-RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # Instructions mostly from:
 # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
@@ -35,6 +34,7 @@ RUN apt-get update -y && apt-get install -y \
     git \
     cmake \
     mercurial \
+    wget \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
@@ -45,35 +45,46 @@ RUN mkdir -p $TMP_PATH
 # H.265/HEVC video encoder
 
 WORKDIR $TMP_PATH
-RUN hg clone https://bitbucket.org/multicoreware/x265 \
-    && cd $TMP_PATH/x265/build/linux \
-    && ./make-Makefiles.bash
+# RUN hg clone https://bitbucket.org/multicoreware/x265 \
+#     && cd $TMP_PATH/x265/build/linux \
+#     && ls ../../source/cmake \
+#     && cat ../../source/cmake \
+    # && cmake -G "Unix Makefiles" ../../source \
+    # && ccmake ../../source
+    # && make \
+    # && make install \
+    # && make distclean
 
-WORKDIR $TMP_PATH/x265/build/linux
-RUN echo ${TMP_PATH}/make-Makefiles.bash
-RUN /bin/bash -c "source ${TMP_PATH}/x265/build/linux/make-Makefiles.bash"
-RUN make \
+# AAC audio encoder
+WORKDIR $TMP_PATH
+RUN wget -O fdk-aac.tar.gz https://github.com/mstorsjo/fdk-aac/tarball/master \
+    && tar xzvf fdk-aac.tar.gz \
+    && cd mstorsjo-fdk-aac* \
+    && autoreconf -fiv \
+    && ./configure --disable-shared \
+    && make \
     && make install \
     && make distclean
 
-# AAC audio encoder
-# TODO
-
 # VP8/VP9 video encoder and decoder
-# TODO
+WORKDIR $TMP_PATH
+RUN git clone https://chromium.googlesource.com/webm/libvpx \
+    && cd libvpx \
+    && ./configure \
+    && make \
+    && make install
 
 # Install ffmpeg
 WORKDIR $TMP_PATH
-RUN git clone --depth 1 git://source.ffmpeg.org/ffmpeg
-WORKDIR $TMP_PATH/ffmpeg
-#RUN ./configure --enable-gpl --enable-libfaac --enable-libmp3lame
-#    --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-librtmp \
-#    --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 \
-#    --enable-nonfree --enable-version3
-#RUN make
+RUN git clone --depth 1 git://source.ffmpeg.org/ffmpeg \
+    && cd ffmpeg \
+    && ./configure --enable-gpl --enable-libfaac --enable-libmp3lame \
+    --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-librtmp \
+    --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 \
+    --enable-nonfree --enable-version3 \
+    && make \
+    && make install
 
-#RUN cd FFmpeg && ./configure && make && make install
-
-# RUN rm -rf /tmp/ffmpeg_sources
+RUN rm -rf $TMP_PATH
 
 #ENTRYPOINT [ "ffmpeg-docker" ]
