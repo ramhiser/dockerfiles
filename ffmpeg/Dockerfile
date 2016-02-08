@@ -1,10 +1,10 @@
 FROM ubuntu:trusty
 MAINTAINER John Ramey <johnramey@gmail.com>
 
-# Instructions mostly from:
+# Simple ffmpeg build from:
+# http://fcorti.com/2014/04/22/ffmpeg-ubuntu-14-04-lts/
+# Other ffmpeg instructions from:
 # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
-# More details available from:
-# https://gist.github.com/xdamman/e4f713c8cd1a389a5917
 
 RUN apt-get update
 RUN apt-get install -y software-properties-common
