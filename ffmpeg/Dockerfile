@@ -6,6 +6,9 @@ MAINTAINER John Ramey <johnramey@gmail.com>
 # More details available from:
 # https://gist.github.com/xdamman/e4f713c8cd1a389a5917
 
+# Add multiverse for AAC codec (libfaac-dev)
+RUN echo 'deb http://archive.ubuntu.com/ubuntu trusty universe multiverse' >> /etc/apt/sources.list
+
 # Dependencies
 RUN apt-get update -y && apt-get install -y \
     autoconf \
@@ -13,7 +16,11 @@ RUN apt-get update -y && apt-get install -y \
     build-essential \
     ca-certificates \
     libass-dev \
+    libfaac-dev \
     libfreetype6-dev \
+    libopencore-amrnb-dev \
+    libopencore-amrwb-dev \
+    librtmp-dev \
     libsdl1.2-dev \
     libtheora-dev \
     libtool \
@@ -45,27 +52,15 @@ RUN mkdir -p $TMP_PATH
 WORKDIR $TMP_PATH
 RUN hg clone https://bitbucket.org/multicoreware/x265 \
     && cd $TMP_PATH/x265/build/linux \
-    && ls ../../source \
-    && cmake -G "Unix Makefiles" ../../source \
+    && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="/usr/local" -DENABLE_SHARED:bool=off ../../source \
     && make \
     && make install
-
-# AAC audio codec
-WORKDIR $TMP_PATH
-RUN wget -O fdk-aac.tar.gz https://github.com/mstorsjo/fdk-aac/tarball/master \
-    && tar xzvf fdk-aac.tar.gz \
-    && cd mstorsjo-fdk-aac* \
-    && autoreconf -fiv \
-    && ./configure --disable-shared \
-    && make \
-    && make install \
-    && make distclean
 
 # VP8/VP9 video codec
 WORKDIR $TMP_PATH
 RUN git clone https://chromium.googlesource.com/webm/libvpx \
     && cd libvpx \
-    && ./configure \
+    && ./configure --disable-examples --disable-unit-tests --prefix=/usr/local \
     && make \
     && make install
 
@@ -73,12 +68,15 @@ RUN git clone https://chromium.googlesource.com/webm/libvpx \
 WORKDIR $TMP_PATH
 RUN git clone --depth 1 git://source.ffmpeg.org/ffmpeg \
     && cd ffmpeg \
-    && ./configure --enable-gpl --enable-libfaac --enable-libmp3lame \
-    --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-librtmp \
-    --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 \
-    --enable-nonfree --enable-version3 \
+    && ./configure --prefix=/usr/local --pkg-config-flags="--static" \
+    --extra-cflags="-I$/usr/local/include" --extra-ldflags="-L/usr/local/lib" \
+    --enable-gpl --enable-libmp3lame --enable-libopencore-amrnb \
+    --enable-libopencore-amrwb --enable-librtmp --enable-libtheora --enable-libvorbis \
+    --enable-libvpx --enable-libx264 --enable-nonfree --enable-version3 \
+    # --enable-libfaac
     && make \
-    && make install
+    && make install \
+    && make distclean
 
 RUN rm -rf $TMP_PATH
 
