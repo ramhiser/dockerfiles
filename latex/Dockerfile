@@ -8,5 +8,11 @@ echo '@testing http://nl.alpinelinux.org/alpine/edge/testing' >> /etc/apk/reposi
 # on this.
 RUN apk update \
     poppler \
-    texlive \
+
+# HACK
+# Source: http://jhshi.me/2011/11/10/pdflatex-error-while-loading-shared-libraries-libpoppler-so-13/
+RUN ln -s /usr/lib/libpoppler.so.57 /usr/lib/libpoppler.so.58
+
+RUN apk add texlive@testing
+    texlive@testing \
     && rm -rf /var/cache/apk/*
